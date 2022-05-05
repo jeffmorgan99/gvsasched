@@ -1,0 +1,10 @@
+#!/bin/bash
+tstamp=$(date +"%y%m%d.%H%M%S")
+
+test -d backup || mkdir -p backup
+test -f mastersched.csv && mv -v mastersched.csv backup/mastersched.$tstamp.csv
+
+./getsched.py
+
+diff  mastersched.csv backup/mastersched.$tstamp.csv
+wc -l mastersched.csv backup/mastersched.$tstamp.csv
