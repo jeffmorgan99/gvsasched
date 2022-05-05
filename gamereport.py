@@ -15,9 +15,9 @@ def get_options():
     p.add_option( "-l", "--league", action="store", type="string", dest="league", default="all",
                   help="Name of league" )
     p.add_option( "-t", "--tens", action="store_true", dest="tens", default=False,
-                  help="Get the longest NUM times, defaults to 10" )
-    p.add_option( "-i", "--ignore", action="store", type="int", dest="ignore_secs", default=60,
-                  help="Anything shorter than this amount will not get reported, defaults to 60 (seconds)" )
+                  help="Show the 10pm game count" )
+    p.add_option( "-s", "--summary", action="store_true", dest="summary", default=False,
+                  help="Show the game summary" )
     options,args = p.parse_args()
 
     # Options Handlers
@@ -28,6 +28,7 @@ def main(args):
     allleagues = ['CoedE1', 'CoedE2', 'CoedE3', 'MensCD', 'MensE1', 'MensE2' ]
     mensleagues = ['MensCD', 'MensE1', 'MensE2' ]
     coedleagues = ['CoedE1', 'CoedE2', 'CoedE3', 'MensCD', 'MensE1', 'MensE2' ]
+    gamecount = 0
 
     optsleag = opts.league.lower()
     if optsleag == 'all':
@@ -61,6 +62,7 @@ def main(args):
     f = open("mastersched.csv", "r")
     lines = f.readlines()
     for line in lines:
+        gamecount += 1
         c_fields = line.split(",")
 
         league = c_fields[0]
@@ -126,6 +128,18 @@ def main(args):
         for i in range(0, len(tenlist)):
             if tenlist[i][1] == 0: continue
             print("%i  %s" % (tenlist[i][1], tenlist[i][0]))
+        sys.exit()
+
+    if opts.summary:
+        print("\nCoed E1 Teams: %i" % len(games['CoedE1']))
+        print("Coed E2 Teams: %2i" % len(games['CoedE2']))
+        print("Coed E3 Teams: %2i" % len(games['CoedE3']))
+        print("Mens CD Teams: %2i" % len(games['MensCD']))
+        print("Mens E1 Teams: %2i" % len(games['MensE1']))
+        print("Mens E2 Teams: %2i" % len(games['MensE2']))
+        print("Womens  Teams: 0" )
+        print("  Total Teams: %2i" % (len(games['CoedE1'])+len(games['CoedE2'])+len(games['CoedE3'])+len(games['MensCD'])+len(games['MensE1'])+len(games['MensE2'])))
+        print("\nTotal Games: %i\n" % gamecount)
         sys.exit()
 
     print("+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+")
