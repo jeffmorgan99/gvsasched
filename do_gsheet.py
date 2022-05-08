@@ -12,6 +12,7 @@ import sys
 from optparse import OptionParser
 import time
 import requests
+import wget
 
 def get_options():
     """
@@ -164,6 +165,8 @@ if __name__=='__main__':
                 if dayinc == 4:
                     if friday_games:
                         ssbull.update('D%i:F%i' % (row, row+3), day_field_values)
+                else:
+                    ssbull.update('D%i:F%i' % (row, row+3), day_field_values)
 
             field_index += 5
         day_index += 30
@@ -179,17 +182,29 @@ if __name__=='__main__':
                 print("Unable to delete Friday, rows don't exist")
 
     share_url = "https://docs.google.com/spreadsheets/d/%s/" % ss.id
-    print(share_url)
     bull_url = "https://docs.google.com/spreadsheets/d/%s/export?exportFormat=pdf&gid=%i" % (ss.id, ssbull.id)
     ump_url = "https://docs.google.com/spreadsheets/d/%s/export?exportFormat=pdf&gid=%i" % (ss.id, ssump.id)
-    r = requests.get(bull_url)
-    pdf = open(sheet_name + " Bulletin.pdf", "wb")
-    pdf.write(r.content)
-    pdf.close
-    r = requests.get(ump_url)
-    pdf = open(sheet_name + " Umpire.pdf", "wb")
-    pdf.write(r.content)
-    pdf.close
+    print(share_url)
+    print(bull_url)
+    print(ump_url)
+
+    #wget.download(bull_url)
+    #r = requests.get(bull_url)
+    #with open(sheet_name + " Bulletin.pdf", "wb") as f:
+    #    f.write(r.content)
+    #pdf = open(sheet_name + " Bulletin.pdf", "wb")
+    #pdf.write(r.content)
+    #pdf.close
+
+    headers = {'Authorization': 'Bearer ' + credentials.create_delegated("").get_access_token().access_token}
+
+    res = requests.get(bull_url, headers=headers)
+    with open(sheet_name + " Bulletin.pdf", 'wb') as f:
+            f.write(res.content)
+
+    res = requests.get(ump_url, headers=headers)
+    with open(sheet_name + " Umpire.pdf", 'wb') as f:
+            f.write(res.content)
 
     if opts.email:
         print("Sending email to [%s]" % opts.email)
@@ -197,11 +212,11 @@ if __name__=='__main__':
         subj = "GVSA Scoresheets for %s" % sheet_date.strftime("%a %Y-%m-%d")
         msg = """GVSA Scoresheets for week starting %s
 
-%s
-
-Please print off 2 copies of the 'Bulletin' tab for posting to the bulletin board and inside
+The attached pdf files are ready for printing.  Please print off 2 copies of the 'Bulletin' tab for posting to the bulletin board and inside
 the concession stand. Please print off 5 copies double sided of the 'Umpire' tab for the
 umpires to use asscorecards and timesheets.
+
+(google sheet: %s)
 
 Thank you
 
