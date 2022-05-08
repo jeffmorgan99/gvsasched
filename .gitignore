@@ -9,3 +9,7 @@ MensE2.sched.csv
 backup/
 mastersched.csv
 testsched-4b1a8ed19321.json
+build
+dist
+*.pdf
+.*.swp

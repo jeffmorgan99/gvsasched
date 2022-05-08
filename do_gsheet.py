@@ -11,6 +11,7 @@ import datetime
 import sys
 from optparse import OptionParser
 import time
+import requests
 
 def get_options():
     """
@@ -20,6 +21,10 @@ def get_options():
     p = OptionParser()
     p.add_option( "-d", "--date", action="store", type="string", dest="date", default=False,
             help="Pass the Monday you want to start on: MM/DD/YY (5/9/22)" )
+    p.add_option( "-e", "--email", action="store", type="string", dest="email", default=False,
+            help="Email address to send the link to" )
+    p.add_option( "-r", "--dry-run", action="store_true", dest="dry_run", default=False,
+            help="Email address to send the link to" )
     options,args = p.parse_args()
 
     # Options Handlers
@@ -73,8 +78,11 @@ if __name__=='__main__':
     # First check if sheet already exists
     print("Checking for existing Google Drive sheet [%s]" % sheet_name)
     try:
-        sheet = client.open(sheet_name)
-        ssbull= sheet.sheet1
+        ss = client.open(sheet_name)
+        #ssbull = ss.sheet1
+        #ssump = ss.sheet2
+        ssbull = ss.get_worksheet(0)
+        ssump = ss.get_worksheet(1)
         open_sheet = True
     except:
         print("Could not open sheet [%s]" % sheet_name)
@@ -92,7 +100,10 @@ if __name__=='__main__':
         client.copy("1xtl_IDUqblQ-LFb2RXOtU35pGGi81dd6m8VAm2UTN6Y", title=sheet_name, folder_id="1xkNS8kKOqp9y6mkUcBkYw4iSgdProsTA", copy_permissions=True)
         ss = client.open(sheet_name)
         ss.share("pythongooglesheets-119@testsched.iam.gserviceaccount.com", perm_type='user', role='writer')
-        ssbull = ss.sheet1
+        #ssbull = ss.sheet1
+        #ssump = ss.sheet2
+        ssbull = ss.get_worksheet(0)
+        ssump = ss.get_worksheet(1)
         #print(ssbull.acell('A1').value)
 
     # populate data structure
@@ -108,6 +119,7 @@ if __name__=='__main__':
                 games[working_date.strftime("%a %-m/%-d")][field][tme] = ["", "", ""]
 
     # parse masterched
+    friday_games = False
     f = open("mastersched.csv", "r")
     lines = f.readlines()
     for line in lines:
@@ -124,6 +136,9 @@ if __name__=='__main__':
             games[dte][field][tme][0] = league
             games[dte][field][tme][1] = t1
             games[dte][field][tme][2] = t2
+
+        if dte[0:3] == 'Fri':
+            friday_games = True
 
     # write to gsheet
     ssbull.update_acell('A1', sheet_date.strftime("%-m/%-d/%Y"))
@@ -145,8 +160,58 @@ if __name__=='__main__':
             #    print(day_field_values[x])
             #print('D%i:F%i' % (row, row+3))
 
-            ssbull.update('D%i:F%i' % (row, row+3), day_field_values)
+            if not opts.dry_run:
+                if dayinc == 4:
+                    if friday_games:
+                        ssbull.update('D%i:F%i' % (row, row+3), day_field_values)
 
             field_index += 5
         day_index += 30
+
+
+    # If no Friday games, let's delete that portion
+    if not friday_games:
+        if not opts.dry_run:
+            try:
+                ssbull.delete_rows(121,150)
+                ssump.delete_rows(169,212)
+            except gspread.exceptions.APIError:
+                print("Unable to delete Friday, rows don't exist")
+
+    share_url = "https://docs.google.com/spreadsheets/d/%s/" % ss.id
+    print(share_url)
+    bull_url = "https://docs.google.com/spreadsheets/d/%s/export?exportFormat=pdf&gid=%i" % (ss.id, ssbull.id)
+    ump_url = "https://docs.google.com/spreadsheets/d/%s/export?exportFormat=pdf&gid=%i" % (ss.id, ssump.id)
+    r = requests.get(bull_url)
+    pdf = open(sheet_name + " Bulletin.pdf", "wb")
+    pdf.write(r.content)
+    pdf.close
+    r = requests.get(ump_url)
+    pdf = open(sheet_name + " Umpire.pdf", "wb")
+    pdf.write(r.content)
+    pdf.close
+
+    if opts.email:
+        print("Sending email to [%s]" % opts.email)
+
+        subj = "GVSA Scoresheets for %s" % sheet_date.strftime("%a %Y-%m-%d")
+        msg = """GVSA Scoresheets for week starting %s
+
+%s
+
+Please print off 2 copies of the 'Bulletin' tab for posting to the bulletin board and inside
+the concession stand. Please print off 5 copies double sided of the 'Umpire' tab for the
+umpires to use asscorecards and timesheets.
+
+Thank you
+
+
+
+-----------------------------------------------------------------------------------------------------------
+This is an automated email, please direct all inquiries to jeff.morgan@gvsoftball.org.
+        """ %(sheet_date.strftime("%a %Y-%m-%d"), share_url)
+
+        print(subj)
+        print(msg)
+        
 
