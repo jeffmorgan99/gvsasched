@@ -90,22 +90,20 @@ if __name__=='__main__':
         open_sheet = False
 
     if open_sheet:
-        # sanity check date
-        if ssbull.acell('A1').value != sheet_date.strftime("%A, %B %d, %Y"):
-            print("sheet name check failed")
-            print("[%s] != [%s]" %(ssbull.acell('A1').value, sheet_date.strftime("%A, %B %d, %Y")))
-            sys.exit()
-        print("[%s] == [%s]" %(ssbull.acell('A1').value, sheet_date.strftime("%A, %B %d, %Y")))
-    else:
-        print("Creating Google Sheet from template")
-        client.copy("1xtl_IDUqblQ-LFb2RXOtU35pGGi81dd6m8VAm2UTN6Y", title=sheet_name, folder_id="1xkNS8kKOqp9y6mkUcBkYw4iSgdProsTA", copy_permissions=True)
-        ss = client.open(sheet_name)
-        ss.share("pythongooglesheets-119@testsched.iam.gserviceaccount.com", perm_type='user', role='writer')
-        #ssbull = ss.sheet1
-        #ssump = ss.sheet2
-        ssbull = ss.get_worksheet(0)
-        ssump = ss.get_worksheet(1)
-        #print(ssbull.acell('A1').value)
+        backup_ext = datetime.datetime.now().strftime("%Y%d%m.%H%M%S")
+        print("Existing sheet found [%s], renaming to [%s_%s]" % (sheet_name, sheet_name, backup_ext))
+        # copy to backup name
+        ss.update_title("%s_%s" % (sheet_name, backup_ext))
+
+    print("Creating Google Sheet from template")
+    client.copy("1xtl_IDUqblQ-LFb2RXOtU35pGGi81dd6m8VAm2UTN6Y", title=sheet_name, folder_id="1xkNS8kKOqp9y6mkUcBkYw4iSgdProsTA", copy_permissions=True)
+    ss = client.open(sheet_name)
+    ss.share("pythongooglesheets-119@testsched.iam.gserviceaccount.com", perm_type='user', role='writer')
+    #ssbull = ss.sheet1
+    #ssump = ss.sheet2
+    ssbull = ss.get_worksheet(0)
+    ssump = ss.get_worksheet(1)
+    #print(ssbull.acell('A1').value)
 
     # populate data structure
     # games {  'date' : { 'field' : { 'time' : [ 'team 1', 'team 2' ] } } }

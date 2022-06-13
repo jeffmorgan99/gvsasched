@@ -18,6 +18,8 @@ def get_options():
                   help="Show the 10pm game count" )
     p.add_option( "-s", "--summary", action="store_true", dest="summary", default=False,
                   help="Show the game summary" )
+    p.add_option( "-n", "--teams", action="store", type="string", dest="teams", default="",
+                  help="List of teams, comma separated (ex:  -n Legion,Mingos,317" )
     options,args = p.parse_args()
 
     # Options Handlers
@@ -53,7 +55,7 @@ def main(args):
     elif optsleag == 'mense':
         leagues = ['MensE1', 'MensE2']
     else:
-        print("Error no such league: %s" % options.league)
+        print("Error no such league: %s" % opts.league)
         sys.exit()
         
     games = { 'CoedE1': {}, 'CoedE2': {}, 'CoedE3': {}, 'MensCD': {}, 'MensE1': {}, 'MensE2': {} , 'MensE': {} }
@@ -151,6 +153,18 @@ def main(args):
 
     for league in leagues:
         for team in games[league]:
+            
+            if opts.teams:
+                teamlist = opts.teams.split(',')
+                skip = False
+                for each in teamlist:
+                    if each not in team:
+                        skip = True
+                    else:
+                        skip = False
+                        break
+                if skip: continue
+
             sys.stdout.write("%i %-11s |" % (len(games[league][team]), team[0:11]))
 
             day = seas_start
@@ -172,7 +186,10 @@ def main(args):
                 day =  day + datetime.timedelta(days=dayinc)
     
             sys.stdout.write("\n")
-        print("-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+")
+
+        if not opts.teams:
+            print("-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+")
+    print("")
     
 
 
