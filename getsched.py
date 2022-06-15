@@ -2,6 +2,7 @@
 import datetime
 import sys
 import pandas as pd
+import math
 
 master = "mastersched.csv"
 
@@ -28,8 +29,15 @@ for each in urls:
     print("Writing to file [%s.sched.csv]" % leag)
 
     for i in range(0,len(df[2]['Time'])):
+        if not isinstance(df[2]['Date'][i], str): continue
+
+        # If next line is "Rained Out", then discard this line
+        if isinstance(df[2]['Date'][i+1], str):
+            if df[2]['Date'][i+1][0:6] == 'Rained': continue
+
         if type(df[2]['Date'][i]) != str: continue
         if df[2]['Date'][i][0:4] == 'Week': continue
+        if df[2]['Date'][i][0:6] == 'Rained': continue
         f.write("%s,%s,%s,%s,%s,%s\n" %(leag,df[2]['Date'][i],df[2]['Time'][i],df[2]['Home'][i],df[2]['Away'][i],df[2]['Location'][i]))
         ms.write("%s,%s,%s,%s,%s,%s\n" %(leag,df[2]['Date'][i],df[2]['Time'][i],df[2]['Home'][i],df[2]['Away'][i],df[2]['Location'][i]))
 

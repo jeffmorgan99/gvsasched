@@ -122,6 +122,7 @@ if __name__=='__main__':
     f = open("mastersched.csv", "r")
     lines = f.readlines()
     for line in lines:
+        print(line)
         c_fields = line.split(",")
         league = c_fields[0]
         dte = c_fields[1]
